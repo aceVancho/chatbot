@@ -1,0 +1,9 @@
+node_modules
+dist
+packages
+.webpack
+.venv
+out
+
+server/assets
+
