@@ -1,6 +1,12 @@
 import os
 import csv
 
+import itertools
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem.porter import PorterStemmer
+
 script_dir = os.path.dirname(__file__)
 rel_path = "../assets/sample.csv"
 # rel_path = "../assets/twcs.csv"
@@ -43,18 +49,22 @@ def build_conversation(tweets):
         appendResponses(starter_tweet, new_conversation)
 
     # test
-    conversations_ordered = [[tweet for tweet in conversation] for conversation in conversations]
-    print(conversations_ordered)
+    conversations_ordered = [[tweet['text'] for tweet in conversation] for conversation in conversations]
     return conversations_ordered
-    # for conversation in conversations:
-    #     for tweet in conversation:
-    #         print(tweet['text'])
-    # print(conversations)
 
+def preprocess_text(text):
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    stemmer = PorterStemmer()
+    stop_words = set(stopwords.words('english'))
 
+    text = text.lower()
+    words = word_tokenize(text)
+    words = [word for word in words if word not in stop_words]
+    words = [stemmer.stem(word) for word in words]
+    text = ' '.join(words)
+    text = ''.join(character for character in text if character.isalpha() or character.isspace())
+
+    return text
         
-                
-                
-
-    
-build_conversation(tweets)
+# build_conversation(tweets)
