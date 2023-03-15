@@ -23,6 +23,9 @@ def extract_csv_data(path):
         reader = csv.DictReader(csv_file)
         return [ row for row in reader ]
 
+def chooseRole(role):
+    return 'user' if role.isnumeric() else 'assistant' 
+
 def build_conversation(tweets):
     all_tweets = {}
     starter_tweet_ids = []
@@ -51,7 +54,9 @@ def build_conversation(tweets):
         appendResponses(starter_tweet, new_conversation)
 
     # TODO: consider preprocessing text elsewhere
-    conversations_ordered = [[(preprocess_text(tweet['text'])) for tweet in conversation] for conversation in conversations]
+    conversations_ordered = [[{ 'role': chooseRole(tweet['author_id']), 'content': preprocess_text(tweet['text']) } for tweet in conversation] for conversation in conversations]
+    # TODO: is preprocessing still needed?
+    # conversations_ordered = [[{ 'role': chooseRole(tweet['author_id']), 'content': tweet['text'] } for tweet in conversation] for conversation in conversations]
     return conversations_ordered
 
 def preprocess_text(text):
@@ -62,6 +67,7 @@ def preprocess_text(text):
     text = ' '.join(words)
     text = ''.join(character for character in text if character.isalpha() or character.isspace())
     text = text.strip()
+    # print('Text processed: ', text)
     return text
         
 def write_conversations(conversations_ordered, path):
@@ -71,7 +77,17 @@ def write_conversations(conversations_ordered, path):
             f.write('\n\n')  # add two newlines to separate conversations
 
 # TODO: Train model
+def train_model(conversations_ordered):
+    model_engine = 'gpt-3.5-turbo'
+    for conversation in conversations_ordered:
+        completion = openai.ChatCompletion.create(
+            model=model_engine,
+            messages=conversation
+        )
+        response = completion.choices[0].message
+        print('RESPONSE', response)
 
 tweets = extract_csv_data(abs_file_path)
 conversations_ordered = build_conversation(tweets)
-write_conversations(conversations_ordered, 'preprocessed_conversations.text')
+# write_conversations(conversations_ordered, 'preprocessed_conversations.text')
+train_model(conversations_ordered)
