@@ -1,5 +1,6 @@
 import os
 import csv
+import json
 
 import openai
 import itertools
@@ -10,7 +11,8 @@ from nltk.stem.porter import PorterStemmer
 from openai.api_resources import Model
 
 script_dir = os.path.dirname(__file__)
-rel_path = "../assets/sample.csv" # Actual path: "../assets/twcs.csv"
+rel_path = "../assets/training_data/sample.csv" # Sample path: "../assets/twcs.csv"
+# rel_path = "../assets/training_data/twcs.csv" # Actual path: "../assets/twcs.csv"
 abs_file_path = os.path.join(script_dir, rel_path)
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -53,11 +55,26 @@ def build_conversation(tweets):
         starter_tweet = all_tweets.get(tweet_id)
         appendResponses(starter_tweet, new_conversation)
 
-    # TODO: consider preprocessing text elsewhere
-    conversations_ordered = [[{ 'role': chooseRole(tweet['author_id']), 'content': preprocess_text(tweet['text']) } for tweet in conversation] for conversation in conversations]
-    # TODO: is preprocessing still needed?
-    # conversations_ordered = [[{ 'role': chooseRole(tweet['author_id']), 'content': tweet['text'] } for tweet in conversation] for conversation in conversations]
+    conversations_ordered = []
+    for conversation in conversations:
+        temp_conversation = []
+        for tweet in conversation:
+            temp_conversation.append({ 'role': chooseRole(tweet['author_id']), 'content': preprocess_text(tweet['text']) })
+            # TODO: Fix Preprocess Text
+            # temp_conversation.append({ 'role': chooseRole(tweet['author_id']), 'content': preprocess_text(tweet['text']) })
+
+        pairs = create_conversation_pairs(temp_conversation)
+        # TODO: make relative
+        path = '/Users/adamevancho/VSCodeProjects/Personal/chatbot/server/assets/processed_texts/processed.jsonl'
+        write_conversations(pairs, path)
+        conversations_ordered.append(temp_conversation)
+  
     return conversations_ordered
+
+def create_conversation_pairs(temp_conversation):
+    pairs = [{"prompt": temp_conversation[i]['content'], "completion": temp_conversation[i+1]['content']} for i in range(0, len(temp_conversation)-1, 2)]
+    return pairs
+
 
 def preprocess_text(text):
     text = text.lower()
@@ -67,14 +84,13 @@ def preprocess_text(text):
     text = ' '.join(words)
     text = ''.join(character for character in text if character.isalpha() or character.isspace())
     text = text.strip()
-    # print('Text processed: ', text)
     return text
         
-def write_conversations(conversations_ordered, path):
-    with open(path, 'w') as f:
-        for conversation in conversations_ordered:
-            f.write('\n'.join(conversation))
-            f.write('\n\n')  # add two newlines to separate conversations
+def write_conversations(pairs, path):
+    with open(path, 'a') as f:
+        for pair in pairs:
+            f.write(json.dumps(pair) + '\n')
+        # f.write('\n')
 
 # TODO: Train model
 def train_model(conversations_ordered):
@@ -89,5 +105,4 @@ def train_model(conversations_ordered):
 
 tweets = extract_csv_data(abs_file_path)
 conversations_ordered = build_conversation(tweets)
-# write_conversations(conversations_ordered, 'preprocessed_conversations.text')
-train_model(conversations_ordered)
+# train_model(conversations_ordered)
