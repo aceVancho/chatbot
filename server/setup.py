@@ -8,6 +8,8 @@ setup(
         'console_scripts': [
             'run = index:run_app',
             'test = index:test_app',
+            'create-fine-tune = scripts.fine_tune:create_fine_tune_job',
+            'list-fine-tune = scripts.fine_tune:list_fine_tune_jobs'
         ]
     }
 )
