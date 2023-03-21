@@ -10,5 +10,8 @@ def run_app():
     conversation_pairs = build_prompt_completion_pairs(tweet_obj)
     write_tweets(conversation_pairs, processed_texts_path)
 
+def test_app():
+    print('This is a test.')
+
 if __name__ == "__main__":
     run_app()
