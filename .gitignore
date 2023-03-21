@@ -6,4 +6,6 @@ packages
 out
 
 server/assets
+__pycache__/
+
 
